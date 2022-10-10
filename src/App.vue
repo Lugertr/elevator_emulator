@@ -1,6 +1,11 @@
 <template>
   <elevatorComp></elevatorComp>
-  <button>Клик</button>
+  <div class="floorsArea">
+      <btnComp
+          v-for="n in Config.floors" 
+          :floorNumb="n"  :key="n"
+          :btnFunc="queueAdd"/>
+  </div>
 </template>
 
 <script>
@@ -10,16 +15,19 @@ export default {
   name: 'App',
   data() {
     return{
-      status:{
+      ElevStatus:{
         floor: 1,
         queue: [],
         move: false,
-      } 
+      },
+      Config:{
+        floors: 6,
+      }
     }
   },
   methods: {
-    queueAdd(floor) {this.status.queue.push(floor);},
-    queueRemove() {this.status.queue.shift();}
+    queueAdd(floor) {this.ElevStatus.queue.push(floor);},
+    queueRemove() {this.ElevStatus.queue.shift();}
   },
   components: {elevatorComp, btnComp}
 }
@@ -32,5 +40,10 @@ export default {
     height: 100vh;
     display: flex;
     flex-direction: row;
+  }
+
+  .floorsArea{
+    display: flex;
+    flex-direction: column;
   }
 </style>

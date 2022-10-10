@@ -2,7 +2,7 @@
     <div class="elevator" @click="this.action"
     :style="this.postion"  
     v-bind:class="{flashing: this.blink}">
-        
+        <div v-show="this.move"></div>
     </div>
 </template>
 <script>
@@ -10,11 +10,11 @@
 export default {
     props:{
         status:{ type:Object},
-        moveOp:{ type:Function}
     },
     data() {
         return {
             blink: false,
+            move: false,
             length: 1,
             postion: {
             }
@@ -54,7 +54,7 @@ export default {
         height: 100px;
         background-color: blue;
     }
-    
+
     .flashing{
         animation-name: blinker;
         animation-duration: 1s;
