@@ -1,5 +1,7 @@
 <template>
-    <div class="elevator" @click="this.action"  v-bind:class="{flashing: this.blink}">
+    <div class="elevator" @click="this.action"
+    :style="this.postion"  
+    v-bind:class="{flashing: this.blink}">
         
     </div>
 </template>
@@ -13,24 +15,29 @@ export default {
     data() {
         return {
             blink: false,
+            length: 1,
+            postion: {
+            }
         }
     },
     methods:{
         async action() {
-            //if (this.status.move && this.status.query.length) {
             if (!this.blink) {
-                this.blink= !this.blink;
-                return new Promise((resolve)=>{
-                    setTimeout(()=>{
-                        this.blink= !this.blink;
-                        resolve()
-                    },3000)
-                })
+                return this.moving().then(()=>this.blinc())
             }
             return 
         },
+        async moving() {
+            this.length = 5;
+            this.postion.transition = '5s';
+            this.postion.marginTop = `${100*(5-1)}px`
+            return new Promise(resolve=>setTimeout(()=>{
+                resolve();
+            },this.length*1000))
+            
+        },
         async blinc() {
-            this.blink = false;
+            this.blink = true;
             return new Promise((resolve)=>{
                     setTimeout(()=>{
                         this.blink= !this.blink;
@@ -38,8 +45,7 @@ export default {
                     },3000)
                 })
         },
-        
-    }
+    },
 }
 </script>
 <style scoped>
@@ -48,7 +54,7 @@ export default {
         height: 100px;
         background-color: blue;
     }
-
+    
     .flashing{
         animation-name: blinker;
         animation-duration: 1s;
