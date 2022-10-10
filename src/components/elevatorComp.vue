@@ -10,12 +10,14 @@
 export default {
     props:{
         status:{ type:Object},
+        getFloor: {type: Function},
     },
     data() {
         return {
             blink: false,
             move: false,
-            length: 1,
+            floorToMove: 1,
+            floorNumbs: 0,
             postion: {
             }
         }
@@ -23,17 +25,20 @@ export default {
     methods:{
         async action() {
             if (!this.blink) {
-                return this.moving().then(()=>this.blinc())
+                while(this.floorToMove = this.getFloor()) {
+                    this.floorNumbs = Math.abs(this.floorToMove-this.status.floor);
+                    await this.moving().then(()=>this.blinc())
+                }
             }
             return 
         },
         async moving() {
-            this.length = 5;
-            this.postion.transition = '5s';
-            this.postion.marginTop = `${100*(5-1)}px`
+            console.log(this.floorNumbs)
+            this.postion.transition = `${this.floorNumbs}s`;
+            this.postion.marginTop = `${100*(this.floorToMove-1)}px`
             return new Promise(resolve=>setTimeout(()=>{
                 resolve();
-            },this.length*1000))
+            },this.floorNumbs*1000))
             
         },
         async blinc() {
@@ -41,6 +46,7 @@ export default {
             return new Promise((resolve)=>{
                     setTimeout(()=>{
                         this.blink= !this.blink;
+                        this.status.floor = this.floorToMove;
                         resolve()
                     },3000)
                 })

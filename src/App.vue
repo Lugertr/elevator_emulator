@@ -1,5 +1,7 @@
 <template>
-  <elevatorComp></elevatorComp>
+  <elevatorComp 
+      :getFloor="queueRemove"
+      :status="ElevStatus"/>
   <div class="floorsArea">
       <btnComp
           v-for="n in Config.floors" 
@@ -18,7 +20,6 @@ export default {
       ElevStatus:{
         floor: 1,
         queue: [],
-        move: false,
       },
       Config:{
         floors: 6,
@@ -27,7 +28,7 @@ export default {
   },
   methods: {
     queueAdd(floor) {this.ElevStatus.queue.push(floor);},
-    queueRemove() {this.ElevStatus.queue.shift();}
+    queueRemove() {return this.ElevStatus.queue.shift() || 0;}
   },
   components: {elevatorComp, btnComp}
 }
