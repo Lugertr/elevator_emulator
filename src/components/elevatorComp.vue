@@ -33,6 +33,8 @@ export default {
             this.move = true;                                       
             
             while(this.moveTo = ( this.getFloor(this.id) || 0)) {   //обратка очереди
+                if (this.moveTo == this.floor)
+                    continue
                 this.pathLength = this.moveTo-this.floor;           //вычисление длины пути
 
                 this.direction = (this.pathLength>=0) ? "△": "▽";   //определение стреки табло
