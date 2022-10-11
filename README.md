@@ -3,7 +3,7 @@
 ## Для разработки использовался vue.cli для Vue 3. 
 ### Масштабирование происходит путем изменения значений в файле:
 
-                                              src/component/data/appConfig.js
+src/component/data/appConfig.js
 
 ```
 Анимации лифта реализованы с помощью CSS:
