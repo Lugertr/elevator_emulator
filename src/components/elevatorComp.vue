@@ -9,87 +9,77 @@
     </div>
 </template>
 <script>
-import { takeWhile } from 'rxjs';
-
 
 export default {
     props:{
-        floor: {type:Number},
-        call:{type:Boolean},
-        id:{type:Number},
-        //status:{ type:Object}, 
-        getFloor: {type: Function},
+        floor: {type:Number},           //этаж лифта
+        call:{type:Boolean},            //вызван ли лифт
+        id:{type:Number},               
+        getFloor: {type: Function},     //получить очередной этаж из очереди задач
     },
     data() {
         return{
-            direction: "△",
-            pathLength: 0,
-            blink: false,
-            move: false,
-            moveTo: 0,
-            position: {},
+            direction: "△",             //символ направления
+            pathLength: 0,              //Количество этажей, которые лифту нужно пройти
+            blink: false,               //должен ли лифт мигать
+            move: false,                //движется ли лифт
+            moveTo: 0,                  //к какому этажу лифт движется
+            position: {},               //расположение лифта относительно страницы
         }
     },
     methods:{
-        async action() {
-            this.$emit('saveState')
-            this.move = true;
-            console.log([this.floor])
+        async action() {                                            //функция работы лифта
+            this.$emit('saveState',this.id)                         //сохранение состояния
+            this.move = true;                                       
             
-            while(this.moveTo = ( this.getFloor(this.id) || 0)) {
-                this.pathLength = this.moveTo-this.floor;
-                //this.floor = this.moveTo;
-                //console.log(this.floor)
-                this.direction = (this.pathLength>=0) ? "△": "▽";
+            while(this.moveTo = ( this.getFloor(this.id) || 0)) {   //обратка очереди
+                this.pathLength = this.moveTo-this.floor;           //вычисление длины пути
+
+                this.direction = (this.pathLength>=0) ? "△": "▽";   //определение стреки табло
                 this.$emit('changeFloor',this.moveTo,this.id)
-                await this.moving().then(()=>{                                          //начало движения
-                    this.$emit('moveOver',this.moveTo);        //сигнал родителю, что движение закончено
-                    return this.blinc()})                                               // мигание
-                    .then(()=>this.$emit('saveState'))
+                await this.moving().then(()=>{                        //начало движения
+                    this.$emit('moveOver',this.moveTo);               //сигнал родителю, что движение закончено
+                    return this.blinc()})                             // мигание
+                    .then(()=>this.$emit('saveState',this.id))        //сохранение состояния
                 }
-            this.move = false;                                                   //возврат лифта к состоянию покоя
-            //this.call=false;
-            this.$emit('changeCall',false,this.id)
-            this.$emit('saveState')
+            this.move = false;                                        //возврат лифта к состоянию покоя
+            this.$emit('changeCall',false,this.id)                    //сигнал,что работа лифта закончина                  
+            this.$emit('saveState',this.id)                           //сохранить состояние
         },
-        async moving() {
+        async moving() {                                                                //функция движения
             return new Promise((resolve)=>{
                 const eventHandler = () => {                                            //Обработчик для удаления события у лифта
                     this.$el.removeEventListener("transitionend",eventHandler)
                     resolve()}
-                console.log(this.pathLength)
-                this.position = {transitionDuration: `${Math.abs(this.pathLength)}s`,
-                                marginBottom:`${100*(this.moveTo-1)}px`}    
-                //this.position.transitionDuration = `${Math.abs(this.pathLength)}s`; //Длительность движения
-                //this.position.marginBottom = `${100*(this.moveTo-1)}px`    //MarginBottom как процесс движения
-                this.$el.addEventListener("transitionend",eventHandler,true);
+
+                this.position = {transitionDuration: `${Math.abs(this.pathLength)}s`,   //Длительность движения
+                                marginBottom:`${100*(this.moveTo-1)}px`}                //MarginBottom как процесс движения
+    
+                this.$el.addEventListener("transitionend",eventHandler,true);           //событие для прекращения анимации движения
             })
             
         },
-        async blinc() {
+        async blinc() {                                                             //функция мигания лифта
             this.blink = true;
             return new Promise((resolve)=>{
                 const eventHandler = () => {
-                    this.$el.removeEventListener("animationend",eventHandler)   
+                    this.$el.removeEventListener("animationend",eventHandler)       //обработчик для удаления события анимации мигания
                     this.blink=false;
                     resolve()}
-                    this.$el.addEventListener("animationend", eventHandler,true);
+
+                    this.$el.addEventListener("animationend", eventHandler,true);   //добавления события окончания анимации мигания
                 })
         },
-        changeProps() {
-            this.$emit('changeFloor',this.moveTo,this.id)
-            this.$emit('saveState');
-        }
     },
-    created() {
-        this.position = {
+    created() {                                            //Определение позиции лифта при создании компонента
+        this.position = {                                   
             transitionDuration:'0s',
             marginBottom: `${100*(this.floor-1)}px`};
     },
-    mounted() {
-        if (this.call)
+    mounted() {                                             
+        if (this.call)                                    //вызов функции работы лифта при монтировании
             setTimeout(()=>this.action(),0)
-        this.$watch('call', (call) => {
+        this.$watch('call', (call) => {                   //watcher для вызова функции работы лифта
             if (call && !this.move)
                 this.action()
     });
@@ -103,6 +93,9 @@ export default {
         background-color: blue;
         transition-timing-function: linear;
         transition-property: margin-bottom;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .flashing{
@@ -118,10 +111,13 @@ export default {
     }
 
     .table{
-        font-size: 30px;
+        font-size: 22px;
+        background-color: blueviolet;
+        border-radius: 50%;
+        border: 1px solid white;
         color: white;
-        width: 100%;
-        height: 100%;
+        width: 70%;
+        height: 70%;
         display: flex;
         flex-direction: column;
         align-items: center;
