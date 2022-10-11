@@ -1,52 +1,68 @@
 <template>
     <div class="elevator"
-    :style="this.postion"  
+    :style="this.position"  
     v-bind:class="{flashing: this.blink}">
-        <div v-show="this.move"></div>
+        <div class="table" v-show="this.move">
+            <span>{{this.floor}}</span>
+            <span>{{this.direction}}</span>
+        </div>
     </div>
 </template>
 <script>
+import { takeWhile } from 'rxjs';
+
 
 export default {
     props:{
-        status:{ type:Object}, 
+        floor: {type:Number},
+        call:{type:Boolean},
+        id:{type:Number},
+        //status:{ type:Object}, 
         getFloor: {type: Function},
     },
     data() {
-        return {
-            blink: false, //Анимация мигания
-            move: false,    //Проверка на движение
-            floorToMove: 1, //Номер этажа куда лифт движется
-            floorNumbs: 0, //Количество этажей, которые нужно пройти
-            postion: {}
+        return{
+            direction: "△",
+            pathLength: 0,
+            blink: false,
+            move: false,
+            moveTo: 0,
+            position: {},
         }
     },
     methods:{
         async action() {
+            this.$emit('saveState')
             this.move = true;
-
-            while(this.floorToMove = (this.getFloor(this.status.id) || 0)) {
-                
-                this.floorNumbs = Math.abs(this.floorToMove-this.status.floor);
-                this.status.floor = this.floorToMove;
-                await this.moving().then(()=>{  //начало движения
-                    this.$emit('moveOver',this.floorToMove, true); //сигнал родителю, что движение закончено
-                    return this.blinc()}) // мигание
-
+            console.log([this.floor])
+            
+            while(this.moveTo = ( this.getFloor(this.id) || 0)) {
+                this.pathLength = this.moveTo-this.floor;
+                //this.floor = this.moveTo;
+                //console.log(this.floor)
+                this.direction = (this.pathLength>=0) ? "△": "▽";
+                this.$emit('changeFloor',this.moveTo,this.id)
+                await this.moving().then(()=>{                                          //начало движения
+                    this.$emit('moveOver',this.moveTo);        //сигнал родителю, что движение закончено
+                    return this.blinc()})                                               // мигание
+                    .then(()=>this.$emit('saveState'))
                 }
-
-            this.move = false;          //возврат лифта к состоянию покоя
-            this.status.call=false;
+            this.move = false;                                                   //возврат лифта к состоянию покоя
+            //this.call=false;
+            this.$emit('changeCall',false,this.id)
+            this.$emit('saveState')
         },
         async moving() {
             return new Promise((resolve)=>{
-                const eventHandler = () => {    //Обработчик для удаления события у лифта
+                const eventHandler = () => {                                            //Обработчик для удаления события у лифта
                     this.$el.removeEventListener("transitionend",eventHandler)
                     resolve()}
-
-                this.postion.transitionDuration = `${this.floorNumbs}s`;    //Длительность движения
-                this.postion.marginBottom = `${100*(this.floorToMove-1)}px`    //MarginBottom как процесс движения
-                this.$el.addEventListener("transitionend",eventHandler);
+                console.log(this.pathLength)
+                this.position = {transitionDuration: `${Math.abs(this.pathLength)}s`,
+                                marginBottom:`${100*(this.moveTo-1)}px`}    
+                //this.position.transitionDuration = `${Math.abs(this.pathLength)}s`; //Длительность движения
+                //this.position.marginBottom = `${100*(this.moveTo-1)}px`    //MarginBottom как процесс движения
+                this.$el.addEventListener("transitionend",eventHandler,true);
             })
             
         },
@@ -57,17 +73,27 @@ export default {
                     this.$el.removeEventListener("animationend",eventHandler)   
                     this.blink=false;
                     resolve()}
-
-                    this.$el.addEventListener("animationend", eventHandler);
+                    this.$el.addEventListener("animationend", eventHandler,true);
                 })
         },
+        changeProps() {
+            this.$emit('changeFloor',this.moveTo,this.id)
+            this.$emit('saveState');
+        }
     },
-    watch:{
-        "status.call": function(call) {
+    created() {
+        this.position = {
+            transitionDuration:'0s',
+            marginBottom: `${100*(this.floor-1)}px`};
+    },
+    mounted() {
+        if (this.call)
+            setTimeout(()=>this.action(),0)
+        this.$watch('call', (call) => {
             if (call && !this.move)
                 this.action()
-        }
-    }
+    });
+  },
 }
 </script>
 <style scoped>
@@ -76,6 +102,7 @@ export default {
         height: 100px;
         background-color: blue;
         transition-timing-function: linear;
+        transition-property: margin-bottom;
     }
 
     .flashing{
@@ -88,5 +115,16 @@ export default {
     @keyframes blinker {
         from { opacity: 1.0; }
         to { opacity: 0.2; }
+    }
+
+    .table{
+        font-size: 30px;
+        color: white;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 </style>

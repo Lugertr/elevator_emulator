@@ -2,8 +2,12 @@
   <div class="elevArea" v-for="(obj,index) in createElevators" >
       <elevatorComp 
           :getFloor="queueRemove"
-          :status="obj" :key="index"
-      @moveOver="this.ElevatorMoveOver"/>
+          v-model:floor="obj.floor" v-model:call="obj.call" 
+          v-model:id="obj.id" :key="index"
+          @changeFloor="chageElevatorFloor"
+          @changeCall="chageElevatorCall"
+          @saveState="addInLocalStorage"
+          @moveOver="elevatorMoveOver"/>
   </div>
   <div class="floorsArea">
       <btnComp
@@ -23,13 +27,18 @@ export default {
   data() {
     return{
       appConfig: appConfig, 
-
       btnsProps: [],
       elevProps: []
     }
   },
   computed: { 
     createElevators: function() {
+      //localStorage.clear()
+      if (localStorage.getItem('elevProps')) {
+        this.elevProps = JSON.parse(localStorage.getItem('elevProps'))
+
+      return this.elevProps;
+      }
       for (let i=0;i<this.appConfig.elevators;i++) 
           this.elevProps.push({floor:1,             //добавление информации о лифте: этаж на котором он находится
                               call:false,           //его очередь этажей
@@ -38,6 +47,11 @@ export default {
       return this.elevProps
     },
     createBtnsProps: function() {                       //Генерация объектов с информацией о этаже (его номер и требуется ли ему лифт)
+
+      if (localStorage.getItem('btnsProps')) {
+        this.btnsProps = JSON.parse(localStorage.getItem('btnsProps'))
+      return this.btnsProps;
+      }
       for (let i=this.appConfig.floors;i>0;i--) {
         this.btnsProps.push({numb:i, called:false})
       }
@@ -46,9 +60,16 @@ export default {
     }
   },
   methods: {
-    queueAdd(floor,id) {this.elevProps[id].queue.push(floor)},  //Добавление этажа в очередь
+    addInLocalStorage() {
+      localStorage.setItem('elevProps', JSON.stringify([...this.elevProps]));
+      localStorage.setItem('btnsProps', JSON.stringify([...this.btnsProps]));
+     // console.log(localStorage)
+    },
 
+    queueAdd(floor,id) {this.elevProps[id].queue.push(floor)},  //Добавление этажа в очередь
     queueRemove(id) {return this.elevProps[id].queue.shift()}, //Получение из очереди этажа для лифта
+    chageElevatorFloor(floor,id) {this.elevProps[id].floor = floor},
+    chageElevatorCall(call,id) {this.elevProps[id].call = call},
 
     elevatorFinder(floor) {
       let filtredAndSortArr = this.elevProps.filter((el)=>!el.call);   //ищем свободные лифты
@@ -72,14 +93,14 @@ export default {
       {
         this.btnsProps[this.btnsProps.length-floor].called = true;  //Поменять цвет кнопки
         this.queueAdd(floor,id)                                     //Добавить лифт в очередь
-        this.elevProps[id].call = true;           
+        this.elevProps[id].call = true;       
       }
     },
 
-    ElevatorMoveOver(numb) {                    //Обработка сигнала от лифта, что он приехал на этаж
+    elevatorMoveOver(numb) {                    //Обработка сигнала от лифта, что он приехал на этаж
       if (this.btnsProps[this.btnsProps.length-numb])
-        this.btnsProps[this.btnsProps.length-numb].called = false;}
-
+        this.btnsProps[this.btnsProps.length-numb].called = false;
+      }
   },
   components: {elevatorComp, btnComp}
 }
