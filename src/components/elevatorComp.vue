@@ -25,10 +25,10 @@ export default {
         async action() {
             this.move = true;
 
-            while(this.floorToMove = (this.getFloor() || 0)) {
-
+            while(this.floorToMove = (this.getFloor(this.status.id) || 0)) {
+                
                 this.floorNumbs = Math.abs(this.floorToMove-this.status.floor);
-
+                this.status.floor = this.floorToMove;
                 await this.moving().then(()=>{  //начало движения
                     this.$emit('moveOver',this.floorToMove, true); //сигнал родителю, что движение закончено
                     return this.blinc()}) // мигание
@@ -58,7 +58,6 @@ export default {
                     this.blink=false;
                     resolve()}
 
-                    this.status.floor = this.floorToMove;
                     this.$el.addEventListener("animationend", eventHandler);
                 })
         },

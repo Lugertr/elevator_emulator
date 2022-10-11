@@ -48,4 +48,8 @@ export default {
     .btnActive{
         background-color: brown;
     }
+
+    .btnActive:active{
+        transform: rotate(360deg);
+    }
 </style>
