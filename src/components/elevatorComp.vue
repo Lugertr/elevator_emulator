@@ -1,5 +1,5 @@
 <template>
-    <div class="elevator" @click="this.action"
+    <div class="elevator"
     :style="this.postion"  
     v-bind:class="{flashing: this.blink}">
         <div v-show="this.move"></div>
@@ -9,49 +9,66 @@
 
 export default {
     props:{
-        status:{ type:Object},
+        status:{ type:Object}, 
         getFloor: {type: Function},
     },
     data() {
         return {
-            blink: false,
-            move: false,
-            floorToMove: 1,
-            floorNumbs: 0,
-            postion: {
-            }
+            blink: false, //Анимация мигания
+            move: false,    //Проверка на движение
+            floorToMove: 1, //Номер этажа куда лифт движется
+            floorNumbs: 0, //Количество этажей, которые нужно пройти
+            postion: {}
         }
     },
     methods:{
         async action() {
-            if (!this.blink) {
-                while(this.floorToMove = this.getFloor()) {
-                    this.floorNumbs = Math.abs(this.floorToMove-this.status.floor);
-                    await this.moving().then(()=>this.blinc())
+            this.move = true;
+
+            while(this.floorToMove = (this.getFloor() || 0)) {
+
+                this.floorNumbs = Math.abs(this.floorToMove-this.status.floor);
+
+                await this.moving().then(()=>{  //начало движения
+                    this.$emit('moveOver',this.floorToMove, true); //сигнал родителю, что движение закончено
+                    return this.blinc()}) // мигание
+
                 }
-            }
-            return 
+
+            this.move = false;          //возврат лифта к состоянию покоя
+            this.status.call=false;
         },
         async moving() {
-            console.log(this.floorNumbs)
-            this.postion.transition = `${this.floorNumbs}s`;
-            this.postion.marginTop = `${100*(this.floorToMove-1)}px`
-            return new Promise(resolve=>setTimeout(()=>{
-                resolve();
-            },this.floorNumbs*1000))
+            return new Promise((resolve)=>{
+                const eventHandler = () => {    //Обработчик для удаления события у лифта
+                    this.$el.removeEventListener("transitionend",eventHandler)
+                    resolve()}
+
+                this.postion.transitionDuration = `${this.floorNumbs}s`;    //Длительность движения
+                this.postion.marginBottom = `${100*(this.floorToMove-1)}px`    //MarginBottom как процесс движения
+                this.$el.addEventListener("transitionend",eventHandler);
+            })
             
         },
         async blinc() {
             this.blink = true;
             return new Promise((resolve)=>{
-                    setTimeout(()=>{
-                        this.blink= !this.blink;
-                        this.status.floor = this.floorToMove;
-                        resolve()
-                    },3000)
+                const eventHandler = () => {
+                    this.$el.removeEventListener("animationend",eventHandler)   
+                    this.blink=false;
+                    resolve()}
+
+                    this.status.floor = this.floorToMove;
+                    this.$el.addEventListener("animationend", eventHandler);
                 })
         },
     },
+    watch:{
+        "status.call": function(call) {
+            if (call && !this.move)
+                this.action()
+        }
+    }
 }
 </script>
 <style scoped>
@@ -59,12 +76,13 @@ export default {
         width: 80px;
         height: 100px;
         background-color: blue;
+        transition-timing-function: linear;
     }
 
     .flashing{
         animation-name: blinker;
         animation-duration: 1s;
-        animation-iteration-count: infinite;
+        animation-iteration-count: 3;
     }
 
 
