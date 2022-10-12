@@ -8,7 +8,7 @@ src/component/data/appConfig.js
 ```
 Анимации лифта реализованы с помощью CSS:
   keyframes для мигания
-  transition для движения
+  transition Margin-bottom для движения
 ```
 
 ```
